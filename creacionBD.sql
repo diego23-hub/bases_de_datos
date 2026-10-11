@@ -112,7 +112,8 @@ CREATE TABLE ESTUDIANTEXGRUPO(
 create Table SALONES(
     idSalon int IDENTITY(1,1) PRIMARY KEy,
     nombre varchar(100) not null,
-    descripcion VARCHAR(100)
+    descripcion VARCHAR(100),
+		capacidad int not null
 );
  
 CREATE TABLE SALONESXGRUPO(

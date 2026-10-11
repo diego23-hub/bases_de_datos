@@ -251,13 +251,12 @@ end
 -------------------------
 set @contador=0;
 
-DECLARE @max_est_grupo INT = ISNULL((SELECT MAX(idEstudiantexGrupo) FROM EstudiantesXGrupo), 0);
+DECLARE @max_est_grupo INT = ISNULL((SELECT MAX(idEstudiantexGrupo) FROM EstudianteXGrupo), 0);
 
 WHILE  @contador<@num_estudiantesxgrupo
 begin
-    insert into EstudiantesXGrupo(idEstudiantexGrupo,idEstudiantexCarrera,codigoGrupo,definitiva,estado) 
+    insert into EstudianteXGrupo(idEstudiantexCarrera,codigoGrupo,definitiva,estado) 
     SELECT TOP 1
-        (@max_est_grupo + @contador + 1),                      
         ec.idEstudiantexCarrera,                               
         g.codigoGrupo,                                         
         ROUND(2.0 + (RAND(CHECKSUM(NEWID())) * 3.0), 2),        
@@ -266,7 +265,7 @@ begin
     CROSS JOIN Grupos g
     WHERE NOT EXISTS (
         SELECT 1
-        FROM EstudiantesXGrupo eg
+        FROM EstudianteXGrupo eg
         WHERE eg.idEstudiantexCarrera = ec.idEstudiantexCarrera
           AND eg.codigoGrupo = g.codigoGrupo
     )
@@ -284,8 +283,7 @@ set @contador=0;
 
 WHILE  @contador<@num_salones
 begin
-    insert into Salones(idSalon,nombre,capacidad) values(
-    (@max_salon + @contador + 1),
+    insert into SALONES(nombre, capacidad) values(
     CONCAT('Salon_',(@max_salon +@contador+1)),
     10+ABS(CHECKSUM(NEWID())) % 30
     );  

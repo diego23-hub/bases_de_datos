@@ -31,7 +31,8 @@ create TABLE ESTUDIANTES(
     codigoTipoDocumento int not null,
     numeroDocumento varchar (15) not null,
     direccion VARCHAR (100),
-    codBarrio int
+    codBarrio int,
+    correo varchar(100) not null
 );
  
 create table ESTUDIANTEXCARRERA(
@@ -72,11 +73,13 @@ CREATE TABLE PROFESORES(
     primerApellido varchar(20) not null,
     segundoApellido VARCHAR(20),
     direccion varchar(100),
-    telefono varchar(13) not null
+    telefono varchar(13) not null,
+    correo varchar(20) not null
 );
  
 CREATE TABLE GRUPOS(
     codigoGrupo int PRIMARY key,
+    nombre varchar(100) not null,
     codigoEstudiante int not null,
     idAsignaturaxCarrera int not null,
     codigoProfesor int not null,
@@ -108,7 +111,7 @@ CREATE TABLE ESTUDIANTEXGRUPO(
  
 create Table SALONES(
     idSalon int IDENTITY(1,1) PRIMARY KEy,
-    codigo int not null,
+    nombre varchar(100) not null,
     descripcion VARCHAR(100)
 );
  

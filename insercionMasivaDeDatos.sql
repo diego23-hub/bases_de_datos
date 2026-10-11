@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   PROCEDURE [dbo].[sp_generar_datos_universidad]
+ALTER   PROCEDURE [dbo].[sp_generar_datos_universidad]
     @num_facultades INT ,
     @num_carreras INT ,
     @num_asignaturas INT ,
@@ -44,7 +44,7 @@ VALUES ('Perez'),('Gamboa'),('Martinez'),('Lara'),('Lobo'),('Betancur'),('Alvare
     -- FACULTADES
 -------------------------
 
-DECLARE @max_facultad INT = (SELECT MAX(idFacultad) FROM Facultad);
+DECLARE @max_facultad INT = isnull((SELECT MAX(idFacultad) FROM Facultad),0);
 DECLARE @contador INT=0;
 
 WHILE  @contador<@num_facultades
@@ -60,13 +60,14 @@ end
  -------------------------
     -- CARRERAS
 -------------------------
-DECLARE @max_carrera INT = (SELECT MAX(idCarrera) FROM Carreras);
+DECLARE @max_carrera INT = isnull((SELECT MAX(idCarrera) FROM Carreras),0);
 
 WHILE  @contador<@num_carreras
 begin
-    insert into Carreras(nombre,idFacultad) values(
+    insert into Carreras(nombre,semestres, idFacultad) values(
     CONCAT('Carera_',(@max_carrera +@contador+1)),
-    (SELECT top 1 idFacultad from Facultad order by NEWID())
+    (SELECT top 1 idFacultad from Facultad order by NEWID()),
+    8 + ABS(CHECKSUM(NEWID())) % 3
     )
     set @contador=@contador+1
 end
@@ -75,7 +76,7 @@ end
     -- ASIGNATURAS
 -------------------------
 set @contador=0;
-DECLARE @maxasigna INT = (SELECT MAX(idAsignatura) FROM Asignaturas);
+DECLARE @maxasigna INT = isnull((SELECT MAX(idAsignatura) FROM Asignaturas),0);
 
 WHILE  @contador<@num_asignaturas
 begin
@@ -117,15 +118,15 @@ begin
      Declare @primApe VARCHAR(100)=(select top 1 apellido from #Apellidos order by NEWID());
      Declare @segApe VARCHAR(100)=(select top 1 apellido from #Apellidos order by NEWID());
 
-    insert into Estudiantes(primerNombre,segundoNombre,primerApellido,segundoApellido,codigoTipoDocumento,numeroDocumento,correo,codigoEstudiante) values(
-    CAST(@Documento AS INT), 
+    insert into Estudiantes(codigoEstudiante,primerNombre,segundoNombre,primerApellido,segundoApellido,codigoTipoDocumento,numeroDocumento,correo) VALUES(
+        @CodEstudiante,        
         @primNom,                
         @segNom,                
         @primApe,               
         @segApe,                 
         1,                        
         @Documento,               
-        CONCAT(@primNom,'.',@primApe,'@miuniversidad.edu.co')
+        CONCAT(@primNom, '.', @primApe, '@miuniversidad.edu.co')
     );
     set @contador=@contador+1
 end
@@ -159,13 +160,13 @@ begin
      Declare @primApeP VARCHAR(100)=(select top 1 apellido from #Apellidos order by NEWID());
      Declare @segApeP VARCHAR(100)=(select top 1 apellido from #Apellidos order by NEWID());
 
-    insert into Profesores(primerNombre,segundoNombre,primerApellido,segundoApellido,telefono,codigoProfesor,correo) values(
+    insert into Profesores(codigoProfesor,primerNombre,segundoNombre,primerApellido,segundoApellido,telefono,correo) values(
     @CodProfesor,
     @primNomP,
     @segNomP,
     @primApeP,
     @segApeP,   
-    '555-0000',
+    '5550000',
     CONCAT(@primNomP,'.',@primApeP,'@miuniversidad.edu.co')
     )
     set @contador=@contador+1
@@ -221,15 +222,16 @@ end
     -- grupos
 -------------------------
 set @contador=0;
-DECLARE @maxgrupo INT = (SELECT MAX(codigoGrupo) FROM Grupos);
+DECLARE @maxgrupo INT = isnull((SELECT MAX(codigoGrupo) FROM Grupos),0);
 WHILE  @contador<@num_grupos
 begin
-    insert into Grupos(codigoGrupo,codigoEstudiante, idAsignaturaxCarrera,codigoProfesor) 
+    insert into Grupos(codigoGrupo,nombre,codigoEstudiante, idAsignaturaxCarrera,codigoProfesor) 
     SELECT TOP 1
+        (@maxgrupo + @contador + 1),
         CONCAT('Grupo',(@maxgrupo +@contador+1)),
         e.codigoEstudiante,
-        p.codigoProfesor,
-        ac.idAsignaturaxCarrera
+        ac.idAsignaturaxCarrera,
+        p.codigoProfesor
     FROM Profesores p
     CROSS JOIN ESTUDIANTES e
     CROSS JOIN AsignaturaXCarrera ac
@@ -249,44 +251,47 @@ end
 -------------------------
 set @contador=0;
 
+DECLARE @max_est_grupo INT = ISNULL((SELECT MAX(idEstudiantexGrupo) FROM EstudiantesXGrupo), 0);
+
 WHILE  @contador<@num_estudiantesxgrupo
 begin
-    insert into EstudiantesXGrupo(codigoEstudiante,codigoGrupo,estado) 
+    insert into EstudiantesXGrupo(idEstudiantexGrupo,idEstudiantexCarrera,codigoGrupo,definitiva,estado) 
     SELECT TOP 1
-        a.codigoEstudiante,
-        c.codigoGrupo,
+        (@max_est_grupo + @contador + 1),                      
+        ec.idEstudiantexCarrera,                               
+        g.codigoGrupo,                                         
+        ROUND(2.0 + (RAND(CHECKSUM(NEWID())) * 3.0), 2),        
         'Activo'
-    FROM Estudiantes a
-    CROSS JOIN Grupos c
+    FROM EstudianteXCarrera ec
+    CROSS JOIN Grupos g
     WHERE NOT EXISTS (
         SELECT 1
-        FROM EstudiantesXGrupo ac
-        WHERE ac.codigoEstudiante = a.codigoEstudiante
-          AND ac.codigoGrupo = c.codigoGrupo
+        FROM EstudiantesXGrupo eg
+        WHERE eg.idEstudiantexCarrera = ec.idEstudiantexCarrera
+          AND eg.codigoGrupo = g.codigoGrupo
     )
-    ORDER BY NEWID()
+    ORDER BY NEWID();
     
-    set @contador=@contador+1
+    set @contador = @contador + 1;
 end
 
  -------------------------
     -- SALONES
 -------------------------
 
-DECLARE @max_salon INT = (SELECT MAX(idSalon) FROM Salones);
+DECLARE @max_salon INT = isnull((SELECT MAX(idSalon) FROM Salones),0);
 set @contador=0;
 
 WHILE  @contador<@num_salones
 begin
-    insert into Salones(nombre,capacidad) values(
+    insert into Salones(idSalon,nombre,capacidad) values(
+    (@max_salon + @contador + 1),
     CONCAT('Salon_',(@max_salon +@contador+1)),
     10+ABS(CHECKSUM(NEWID())) % 30
-    )
+    );  
     set @contador=@contador+1
 end
  
-
-
  -------------------------
     -- salonesxgrupo
 -------------------------

@@ -74,7 +74,7 @@ CREATE TABLE PROFESORES(
     segundoApellido VARCHAR(20),
     direccion varchar(100),
     telefono varchar(13) not null,
-    correo varchar(20) not null
+    correo varchar(100) not null
 );
  
 CREATE TABLE GRUPOS(

@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER   PROCEDURE [dbo].[sp_generar_datos_universidad]
+Create or ALTER   PROCEDURE [dbo].[sp_generar_datos_universidad]
     @num_facultades INT ,
     @num_carreras INT ,
     @num_asignaturas INT ,
